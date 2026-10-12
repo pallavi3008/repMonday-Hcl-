@@ -1,29 +1,292 @@
-
-<html>
+<!doctype html>
+<html lang="en">
     <head>
-        <title> 1st page for push</title>
-        <link rel="'stylesheet" href="style.css">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#f7f8fc">
+        <title>Studyspace — Student Task Manager</title>
+        <link rel="stylesheet" href="style.CSS">
     </head>
     <body>
-        <ul>
-            
-        </ul>
-        <script>
-            let a= parseInt(prompt("Enter value of a:"));
-            let b= parseInt(prompt("Enter value of b:"));
-            let c= a+b;
-            document.write("The sum of c is: " + c);
-            document.getElementById("first").textContent = a;
-            document.getElementById("second").textContent = b;
-            document.getElementById("output").textContent = "Sum:" +(a+b);
+        <header class="topbar">
+            <a class="brand" href="#" aria-label="Studyspace home">
+                <span class="brand-mark" aria-hidden="true">S</span>
+                <span>studyspace</span>
+            </a>
+            <span class="topbar-note"><span class="status-dot"></span> Your study day, organized</span>
+        </header>
 
+        <main class="page-shell">
+            <section class="welcome">
+                <div>
+                    <p class="eyebrow">YOUR PERSONAL STUDY PLANNER</p>
+                    <h1>Make room for <span>what matters.</span></h1>
+                    <p class="welcome-copy">Keep track of assignments, stay on top of deadlines, and celebrate every little win.</p>
+                </div>
+                <div class="date-card" aria-label="Today's date">
+                    <span class="date-icon" aria-hidden="true">✳</span>
+                    <div><span class="date-label">TODAY</span><strong id="today-date"></strong></div>
+                </div>
+            </section>
+
+            <section class="stats" aria-label="Task overview">
+                <article class="stat-card">
+                    <span class="stat-icon lavender" aria-hidden="true">▤</span>
+                    <div><span class="stat-label">TOTAL TASKS</span><strong id="total-count">0</strong></div>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-icon peach" aria-hidden="true">◷</span>
+                    <div><span class="stat-label">TO DO</span><strong id="todo-count">0</strong></div>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-icon mint" aria-hidden="true">✓</span>
+                    <div><span class="stat-label">COMPLETED</span><strong id="completed-count">0</strong></div>
+                </article>
+            </section>
+
+            <div class="workspace">
+                <section class="panel form-panel" aria-labelledby="form-heading">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">LET'S GET IT DONE</p>
+                            <h2 id="form-heading">Add a task</h2>
+                        </div>
+                        <span class="heading-sparkle" aria-hidden="true">✦</span>
+                    </div>
+                    <form id="task-form">
+                        <label for="task-title">Task title <span class="required">*</span></label>
+                        <input id="task-title" name="title" type="text" maxlength="100" placeholder="e.g. Finish biology lab report" required>
+
+                        <label for="task-description">Description <span class="optional">(optional)</span></label>
+                        <textarea id="task-description" name="description" rows="3" maxlength="500" placeholder="Add a few details to help you get started..."></textarea>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="task-due-date">Due date <span class="required">*</span></label>
+                                <input id="task-due-date" name="dueDate" type="date" required>
+                            </div>
+                            <div>
+                                <label for="task-priority">Priority</label>
+                                <select id="task-priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="button button-primary" id="save-button" type="submit"><span aria-hidden="true">＋</span> Add task</button>
+                            <button class="button button-quiet" id="cancel-edit" type="button" hidden>Cancel</button>
+                        </div>
+                    </form>
+                    <p class="form-note"><span aria-hidden="true">✧</span> One step at a time. You’ve got this.</p>
+                </section>
+
+                <section class="panel tasks-panel" aria-labelledby="tasks-heading">
+                    <div class="tasks-heading">
+                        <div>
+                            <p class="eyebrow">YOUR ACADEMIC TODO LIST</p>
+                            <h2 id="tasks-heading">My tasks <span class="task-count" id="visible-count">0</span></h2>
+                        </div>
+                    </div>
+
+                    <div class="filters" aria-label="Filter tasks">
+                        <div class="filter-field">
+                            <label for="status-filter">Show</label>
+                            <select id="status-filter">
+                                <option value="all">All tasks</option>
+                                <option value="active">To do</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="priority-filter">Priority</label>
+                            <select id="priority-filter">
+                                <option value="all">All priorities</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p class="sr-only" id="task-announcement" aria-live="polite"></p>
+                    <div class="task-list" id="task-list"></div>
+                </section>
+            </div>
+            <footer class="page-footer">A little progress each day adds up to big results. <span aria-hidden="true">✦</span></footer>
+        </main>
+
+        <script>
+            const STORAGE_KEY = "studyspace-tasks";
+            const taskForm = document.getElementById("task-form");
+            const taskList = document.getElementById("task-list");
+            const titleInput = document.getElementById("task-title");
+            const descriptionInput = document.getElementById("task-description");
+            const dueDateInput = document.getElementById("task-due-date");
+            const priorityInput = document.getElementById("task-priority");
+            const saveButton = document.getElementById("save-button");
+            const cancelEditButton = document.getElementById("cancel-edit");
+            const statusFilter = document.getElementById("status-filter");
+            const priorityFilter = document.getElementById("priority-filter");
+            const announcement = document.getElementById("task-announcement");
+            let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            let editingId = null;
+
+            document.getElementById("today-date").textContent = new Intl.DateTimeFormat("en", {
+                weekday: "short",
+                month: "short",
+                day: "numeric"
+            }).format(new Date());
+            dueDateInput.value = getLocalDateString(new Date());
+
+            function getLocalDateString(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+            }
+
+            function escapeHtml(value) {
+                return String(value).replace(/[&<>"']/g, character => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                })[character]);
+            }
+
+            function saveTasks() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+            }
+
+            function formatDate(dateString) {
+                const [year, month, day] = dateString.split("-").map(Number);
+                return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" })
+                    .format(new Date(year, month - 1, day));
+            }
+
+            function renderTasks() {
+                const completedCount = tasks.filter(task => task.completed).length;
+                document.getElementById("total-count").textContent = tasks.length;
+                document.getElementById("todo-count").textContent = tasks.length - completedCount;
+                document.getElementById("completed-count").textContent = completedCount;
+
+                const visibleTasks = tasks
+                    .filter(task => statusFilter.value === "all"
+                        || (statusFilter.value === "active" && !task.completed)
+                        || (statusFilter.value === "completed" && task.completed))
+                    .filter(task => priorityFilter.value === "all" || task.priority === priorityFilter.value)
+                    .sort((first, second) => first.dueDate.localeCompare(second.dueDate));
+
+                document.getElementById("visible-count").textContent = visibleTasks.length;
+                if (visibleTasks.length === 0) {
+                    const noTasks = tasks.length === 0
+                        ? { title: "Your task list is a blank page.", message: "Add your first task and make today count.", icon: "✦" }
+                        : { title: "No tasks match these filters.", message: "Try changing a filter to see more of your tasks.", icon: "⌕" };
+                    taskList.innerHTML = `<div class="empty-state"><span class="empty-icon" aria-hidden="true">${noTasks.icon}</span><h3>${noTasks.title}</h3><p>${noTasks.message}</p></div>`;
+                    return;
+                }
+
+                const today = getLocalDateString(new Date());
+                taskList.innerHTML = visibleTasks.map(task => {
+                    const overdue = !task.completed && task.dueDate < today;
+                    const description = task.description
+                        ? `<p class="task-description">${escapeHtml(task.description)}</p>`
+                        : "";
+                    return `
+                        <article class="task-card${task.completed ? " is-completed" : ""}" data-task-id="${escapeHtml(task.id)}">
+                            <button class="complete-button${task.completed ? " is-checked" : ""}" type="button" data-action="toggle" aria-label="${task.completed ? "Mark as to do" : "Mark as completed"}" aria-pressed="${task.completed}">${task.completed ? "✓" : ""}</button>
+                            <div class="task-content">
+                                <div class="task-title-row">
+                                    <h3>${escapeHtml(task.title)}</h3>
+                                    <span class="priority-badge priority-${escapeHtml(task.priority)}"><span aria-hidden="true">●</span> ${escapeHtml(task.priority)}</span>
+                                </div>
+                                ${description}
+                                <p class="task-due${overdue ? " is-overdue" : ""}"><span aria-hidden="true">${overdue ? "!" : "◷"}</span> ${overdue ? "Overdue · " : "Due "} ${formatDate(task.dueDate)}</p>
+                            </div>
+                            <div class="task-actions">
+                                <button class="icon-button" type="button" data-action="edit" aria-label="Edit ${escapeHtml(task.title)}" title="Edit task">✎</button>
+                                <button class="icon-button delete-button" type="button" data-action="delete" aria-label="Delete ${escapeHtml(task.title)}" title="Delete task">×</button>
+                            </div>
+                        </article>`;
+                }).join("");
+            }
+
+            function resetForm() {
+                taskForm.reset();
+                dueDateInput.value = getLocalDateString(new Date());
+                priorityInput.value = "medium";
+                editingId = null;
+                saveButton.innerHTML = '<span aria-hidden="true">＋</span> Add task';
+                cancelEditButton.hidden = true;
+                document.getElementById("form-heading").textContent = "Add a task";
+            }
+
+            taskForm.addEventListener("submit", event => {
+                event.preventDefault();
+                const taskData = {
+                    title: titleInput.value.trim(),
+                    description: descriptionInput.value.trim(),
+                    dueDate: dueDateInput.value,
+                    priority: priorityInput.value
+                };
+
+                if (!taskData.title || !taskData.dueDate) {
+                    taskForm.reportValidity();
+                    return;
+                }
+
+                if (editingId) {
+                    tasks = tasks.map(task => task.id === editingId ? { ...task, ...taskData } : task);
+                    announcement.textContent = "Task updated.";
+                } else {
+                    tasks.push({ id: crypto.randomUUID(), ...taskData, completed: false });
+                    announcement.textContent = "Task added.";
+                }
+                saveTasks();
+                resetForm();
+                renderTasks();
+            });
+
+            taskList.addEventListener("click", event => {
+                const button = event.target.closest("button[data-action]");
+                if (!button) return;
+                const card = button.closest("[data-task-id]");
+                const task = tasks.find(item => item.id === card.dataset.taskId);
+                if (!task) return;
+
+                if (button.dataset.action === "toggle") {
+                    task.completed = !task.completed;
+                    announcement.textContent = task.completed ? "Task marked as completed." : "Task marked as to do.";
+                } else if (button.dataset.action === "edit") {
+                    editingId = task.id;
+                    titleInput.value = task.title;
+                    descriptionInput.value = task.description;
+                    dueDateInput.value = task.dueDate;
+                    priorityInput.value = task.priority;
+                    saveButton.innerHTML = '<span aria-hidden="true">✓</span> Save changes';
+                    cancelEditButton.hidden = false;
+                    document.getElementById("form-heading").textContent = "Edit your task";
+                    titleInput.focus();
+                    document.querySelector(".form-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+                    return;
+                } else if (button.dataset.action === "delete") {
+                    tasks = tasks.filter(item => item.id !== task.id);
+                    if (editingId === task.id) resetForm();
+                    announcement.textContent = "Task deleted.";
+                }
+
+                saveTasks();
+                renderTasks();
+            });
+
+            cancelEditButton.addEventListener("click", resetForm);
+            statusFilter.addEventListener("change", renderTasks);
+            priorityFilter.addEventListener("change", renderTasks);
+            renderTasks();
         </script>
     </body>
 </html>
-<body>
-    <table>
-        <td> </td>
-        <td> 1st Input</td>
-        <td>Operation</td>
-    </table>
-</body>
